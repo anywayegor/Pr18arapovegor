@@ -1,0 +1,165 @@
+первый код:
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+            x:Class="MauiMonsterFight.MainPage"
+            BackgroundColor="White"
+            Title="Бой против монстра">
+   <Grid RowSpacing="10" Padding="12">
+       <Grid.RowDefinitions>
+           <RowDefinition Height="Auto" />
+           <RowDefinition Height="Auto" />
+           <RowDefinition Height="Auto" />
+           <RowDefinition Height="*" />
+       </Grid.RowDefinitions>
+       <Label Grid.Row="0" Text="Бой против монстра" FontSize="22"
+              HorizontalOptions="Center" FontAttributes="Bold"/>
+       <Grid Grid.Row="1" ColumnSpacing="12" Margin="0,6,0,0">
+           <Grid.ColumnDefinitions>
+               <ColumnDefinition Width="*" />
+               <ColumnDefinition Width="Auto" />
+               <ColumnDefinition Width="*" />
+           </Grid.ColumnDefinitions>
+           <Frame Grid.Column="0" CornerRadius="8" Padding="10"
+                  HasShadow="False" BorderColor="Gray" BackgroundColor="#F7FFF7">
+               <StackLayout Spacing="6">
+                   <Label Text="Игрок" FontAttributes="Bold" />
+                   <Label x:Name="PlayerHpLabel" Text="HP: 100 / 100" FontSize="12"/>
+                   <ProgressBar x:Name="PlayerHpBar" HeightRequest="6" Progress="1" />
+                   <Label Text="Сила: 6-12" FontSize="12" TextColor="Gray" />
+               </StackLayout>
+           </Frame>
+           <BoxView Grid.Column="1" WidthRequest="2" BackgroundColor="Gray" VerticalOptions="Fill" />
+           <Frame Grid.Column="2" CornerRadius="8" Padding="10"
+                  HasShadow="False" BorderColor="Gray" BackgroundColor="#FFF7F7">
+               <StackLayout Spacing="6">
+                   <Label Text="Монстр" FontAttributes="Bold" HorizontalOptions="End"/>
+                   <Label x:Name="MonsterHpLabel" Text="HP: 80 / 80" FontSize="12" HorizontalOptions="End"/>
+                   <ProgressBar x:Name="MonsterHpBar" HeightRequest="6" Progress="1" />
+                   <Label Text="Сила: 5-10" FontSize="12" TextColor="Gray" HorizontalOptions="End" />
+               </StackLayout>
+           </Frame>
+       </Grid>
+       <HorizontalStackLayout Grid.Row="2" HorizontalOptions="Center" Spacing="12" Margin="0,6,0,6">
+           <Button x:Name="BtnAttack" Text="Атаковать" WidthRequest="110" IsEnabled="False" Clicked="BtnAttack_Clicked"/>
+           <Button x:Name="BtnHeal" Text="Вылечиться" WidthRequest="110" IsEnabled="False" Clicked="BtnHeal_Clicked"/>
+           <Button x:Name="BtnSuper" Text="Супер-атака" WidthRequest="120" IsEnabled="False" Clicked="BtnSuper_Clicked"/>
+           <Button x:Name="BtnNewGame" Text="Новая игра" WidthRequest="110" BackgroundColor="#5A2DF5" TextColor="White" Clicked="BtnNewGame_Clicked"/>
+       </HorizontalStackLayout>
+       <Frame Grid.Row="3" CornerRadius="6" BorderColor="Gray" Padding="8">
+           <ScrollView>
+               <Label x:Name="LogLabel" Text="Бой начат..." />
+           </ScrollView>
+       </Frame>
+   </Grid>
+</ContentPage>
+
+
+
+второй код:
+namespace MauiMonsterFight
+{
+   public partial class MainPage : ContentPage
+   {
+       const int PlayerMaxHp = 100;
+       const int MonsterMaxHp = 80;
+       int playerHp;
+       int monsterHp;
+       Random rnd = new Random();
+
+       public MainPage()
+       {
+           InitializeComponent();
+           ResetGame();
+       }
+
+       void ResetGame()
+       {
+           playerHp = PlayerMaxHp;
+           monsterHp = MonsterMaxHp;
+           UpdateUi();
+           BtnAttack.IsEnabled = false;
+           BtnHeal.IsEnabled = false;
+           BtnSuper.IsEnabled = false;
+           AppendLog("Бой начат...");
+       }
+
+       void UpdateUi()
+       {
+           PlayerHpLabel.Text = $"HP: {playerHp} / {PlayerMaxHp}";
+           MonsterHpLabel.Text = $"HP: {monsterHp} / {MonsterMaxHp}";
+           PlayerHpBar.Progress = Math.Max(0, (double)playerHp / PlayerMaxHp);
+           MonsterHpBar.Progress = Math.Max(0, (double)monsterHp / MonsterMaxHp);
+       }
+
+       void AppendLog(string text)
+       {
+           LogLabel.Text += (LogLabel.Text.Length > 0 ? "\n" : "") + text;
+       }
+
+       private void BtnNewGame_Clicked(object sender, EventArgs e)
+       {
+           ResetGame();
+           AppendLog("Новая игра запущена.");
+       }
+
+       private void BtnAttack_Clicked(object sender, EventArgs e)
+       {
+           int dmg = rnd.Next(6, 13);
+           monsterHp -= dmg;
+           AppendLog($"Игрок атакует и наносит {dmg} урона монстру.");
+           if (monsterHp <= 0)
+           {
+               monsterHp = 0;
+               UpdateUi();
+               AppendLog("Монстр повержен! Победа!");
+               BtnAttack.IsEnabled = BtnHeal.IsEnabled = BtnSuper.IsEnabled = false;
+               return;
+           }
+           UpdateUi();
+           MonsterTurn();
+       }
+
+       private void BtnHeal_Clicked(object sender, EventArgs e)
+       {
+           int heal = rnd.Next(8, 15);
+           playerHp = Math.Min(PlayerMaxHp, playerHp + heal);
+           AppendLog($"Игрок восстанавливает {heal} HP.");
+           UpdateUi();
+           MonsterTurn();
+       }
+
+       private void BtnSuper_Clicked(object sender, EventArgs e)
+       {
+           int dmg = rnd.Next(12, 21);
+           monsterHp -= dmg;
+           AppendLog($"Игрок использует Супер-атаку и наносит {dmg} урона!");
+           if (monsterHp <= 0)
+           {
+               monsterHp = 0;
+               UpdateUi();
+               AppendLog("Монстр повержен! Победа!");
+               BtnAttack.IsEnabled = BtnHeal.IsEnabled = BtnSuper.IsEnabled = false;
+               return;
+           }
+           UpdateUi();
+           MonsterTurn();
+       }
+
+       void MonsterTurn()
+       {
+           int dmg = rnd.Next(5, 11);
+           playerHp -= dmg;
+           AppendLog($"Монстр наносит {dmg} урона игроку.");
+           if (playerHp <= 0)
+           {
+               playerHp = 0;
+               UpdateUi();
+               AppendLog("Игрок повержен. Игра окончена.");
+               BtnAttack.IsEnabled = BtnHeal.IsEnabled = BtnSuper.IsEnabled = false;
+               return;
+           }
+           UpdateUi();
+       }
+   }
+}
